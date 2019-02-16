@@ -5,16 +5,10 @@ authors = ["johannesvollmer <johannes.boenki@t-online.de>"]
 edition = "2018"
 
 [dependencies]
-# core
+oriole-text = { path = "../oriole-text" }
+
+# when used, these are dev-dependencies
 rusttype = "0.7.5"
+signed-distance-field = "0.6.3"
+resize = "0.3.0"
 rect_packer = "0.2.1"
-signed-distance-field = "0.6.2"
-
-# serialization
-compress = "0.1.2"
-serde = "1.0.87"
-bincode = "1.1.1"
-serde_derive = "1.0.87"
-
-# alternatives to std
-hashbrown = "0.1.8"

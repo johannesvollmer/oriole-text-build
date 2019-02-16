@@ -1,51 +1,36 @@
 pub mod atlas;
 pub mod font;
-pub mod text;
-pub mod rectangle;
 
-#[cfg(feature = "glium_text")]
-pub mod glium;
+pub use crate::font::generate_font;
 
-pub mod prelude {
-    pub use font::Font;
-    pub use text::TextCaretPositions;
+
+pub fn bake_directory(font_directory: str, output_directory: str, glyphs: str){
+    // remove baked files of removed fonts
+    baked_file_dir.children().filter(font_dir.contains(corresponding)).foreach(delete);
+
+    for font in font_dir.children() {
+        update_bake_file(font, output_directory, glyphs)
+    }
 }
 
+pub fn update_bake_file(font_file: str, output_directory: str, glyphs: str){
+    let baked_font_file = font + "baked";
 
-
-#[cfg(text)]
-mod tests {
-    use crate::text::LayoutGlyphs;
-    use crate::font::Font;
-    use crate::text::layout_glyphs;
-
-    #[test]
-    fn api(){
-        let font = Font::generate("fonts/Roboto.ttf", (0..65000)).unwrap();
-
-        let mut text_mesh: Vec<Vertex> = Vec::new();
-        let mut caret_positions: Vec<(f32, f32)> = Vec::new();
-
-        struct Vertex {
-            position: (f32, f32),
-            texture: (f32, f32),
-        };
-
-        for glyph in font.layout_glyphs("Hello World!") {
-            caret_positions.push(glyph.layout.in_mesh.position);
-
-            let quad_positions = glyph.layout.in_mesh.vertices();
-            let quad_texture_coords = glyph.layout.in_atlas.vertices();
-
-            for quad_vertex_index in 0..4 {
-                text_mesh.push(Vertex {
-                    position: quad_positions[quad_vertex_index],
-                    texture: quad_texture_coords[quad_vertex_index]
-                })
-            }
-        }
-
-
+    if !baked_font_file.exists() {
+        bake(baked_font_file, chars);
     }
+    else if baked_font_file.open().build_font().glyphs != chars {
+        bake(baked_font_file, chars);
+    }
+}
 
+pub fn bake_file(font_file: str, output_directory: str, glyphs: str){
+    let mut font_file = ::std::io::File::open(font_file).unwrap();
+    let mut bytes = Vec::new();
+    font_file.read_all(&mut bytes);
+
+    let font = crate::generate_font(&bytes, true, glyphs).unwrap();
+
+    let mut baked_file = ::std::io::File::create(output_directory + font_file.name() + ".baked").unwrap();
+    font.write(&mut baked_file).unwrap();
 }
