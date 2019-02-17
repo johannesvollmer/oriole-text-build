@@ -1,4 +1,4 @@
-use oriole_text::atlas::{ Atlas,  SerializedAtlas };
+use oriole_text::atlas::{ SerializedAtlas };
 use oriole_text::rectangle::Rectangle;
 
 pub struct Segment {
@@ -7,7 +7,8 @@ pub struct Segment {
 }
 
 
-pub fn generate_atlas(mut glyphs: impl Iterator<Item=(char, Segment)>) -> Self {
+
+pub fn generate_atlas(mut glyphs: impl Iterator<Item=(char, Segment)>) -> SerializedAtlas {
     let mut packed_size = (128, 128);
 
     struct PackedSegment {
@@ -70,17 +71,17 @@ pub fn generate_atlas(mut glyphs: impl Iterator<Item=(char, Segment)>) -> Self {
 
             // copy row by row
             for segment_y in 0..segment_h {
-                let segment_index = y * segment_w;
+                let segment_index = segment_y * segment_w;
                 let segment_row = &pixels[segment_index .. segment_index + segment_w];
 
-                let atlas_index = (y + atlas_y) * atlas_w + atlas_x;
+                let atlas_index = (segment_y + atlas_y) * atlas_w + atlas_x;
                 let atlas_row = &mut atlas[atlas_index .. atlas_index + segment_w];
 
-                atlas_row.copy_from_slice(segment_row).unwrap();
+                atlas_row.copy_from_slice(segment_row);
             }
         }
 
-        return Atlas {
+        return SerializedAtlas {
             glyphs: packed.into_iter()
                 .map(|seg| (
                     seg.character,
@@ -102,5 +103,4 @@ pub fn generate_atlas(mut glyphs: impl Iterator<Item=(char, Segment)>) -> Self {
         };
     }
 }
-
 

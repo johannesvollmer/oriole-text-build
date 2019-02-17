@@ -5,10 +5,17 @@ authors = ["johannesvollmer <johannes.boenki@t-online.de>"]
 edition = "2018"
 
 [dependencies]
-oriole-text = { path = "../oriole-text" }
+oriole-text = { version = "0.1.0", path = "../oriole-text", features = [ "glium-render" ] }
 
 # when used, these are dev-dependencies
 rusttype = "0.7.5"
 signed-distance-field = "0.6.3"
 resize = "0.3.0"
 rect_packer = "0.2.1"
+
+
+# All dependencies (but not this crate itself or any workspace member)
+# will be compiled with -Copt-level=2 . This includes build dependencies.
+#cargo-features = ["profile-overrides"]
+#[profile.dev.overrides."*"]
+#opt-level = 2
