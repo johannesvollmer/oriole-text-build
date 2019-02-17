@@ -12,6 +12,7 @@ use crate::atlas::Segment;
     let hash = hasher.finish();
 }*/
 
+#[derive(Clone, Copy)]
 pub struct BuildCongifuration {
     char_resolution_y: usize,
     sdf_multisampling: usize,
@@ -21,7 +22,7 @@ pub struct BuildCongifuration {
 pub fn generate_font(
     ttf_bytes: &[u8],
     configuration: BuildCongifuration,
-    mut chars: impl Iterator<Item=char> + Clone,
+    chars: impl Iterator<Item=char> + Clone,
 )
     -> Result<SerializedFont, ()>
 {
@@ -36,7 +37,7 @@ pub fn generate_font(
     let proxy_scale = rusttype::Scale::uniform(proxy_scale_factor);
     let proxy_position = rusttype::point(0.0, 0.0);
 
-    let atlas = crate::atlas::generate_atlas(chars.flat_map(|character|{
+    let atlas = crate::atlas::generate_atlas(chars.clone().flat_map(|character|{
         let glyph = rusttype_font.glyph(character);
 
         // skip unknown glyphs, except for the zero-glyph itself
@@ -53,16 +54,16 @@ pub fn generate_font(
         let glyph = glyph.scaled(proxy_scale)
             .positioned(proxy_position);
 
-        if let Some(bounds) = glyph.glyph.bounding_box() {
+        if let Some(bounds) = glyph.pixel_bounding_box() {
             let width = bounds.width() as usize;
             let height = bounds.height() as usize;
             contained_chars.push(character);
 
             // collect glyph layout
             glyphs.push((character, GlyphLayout {
-                advance_x: glyph.glyph().h_metrics().advance_width,
+                advance_x: glyph.unpositioned().h_metrics().advance_width,
                 bounds: Rectangle {
-                    position: (bounds.min.0 / proxy_scale_factor, bounds.min.1 / proxy_scale_factor),
+                    position: (bounds.min.x as f32 / proxy_scale_factor, bounds.min.y as f32 / proxy_scale_factor),
                     dimensions: (width as f32 / proxy_scale_factor, height as f32 / proxy_scale_factor),
                 },
             }));
@@ -71,7 +72,7 @@ pub fn generate_font(
             for follower in chars.clone() {
                 let pair_kerning = rusttype_font.pair_kerning(proxy_scale, character, follower);
                 if pair_kerning.abs() > 0.00001 {
-                    kerning.push(((character, follower), kerning));
+                    kerning.push(((character, follower), pair_kerning));
                 }
             }
 

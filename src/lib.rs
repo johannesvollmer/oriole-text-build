@@ -3,11 +3,10 @@ pub mod font;
 
 pub use crate::font::generate_font;
 use std::{fs};
-use std::io::{ Result, Read, Write };
+use std::io::{ Result, Read };
 use std::path::{ Path };
 use std::fs::File;
 use crate::font::BuildCongifuration;
-use oriole_text::font::Font;
 
 
 pub fn bake_font_directory(
@@ -36,12 +35,12 @@ pub fn bake_font_directory(
             /*let metadata = fs::metadata(&path)?;
             let last_modified = metadata.modified()?.elapsed()?.as_secs();
             if last_modified < 24 * 3600 && metadata.is_file() {}*/
-            update_bake_file(&entry, bake_directory, configuration, glyphs)?;
+            update_bake_file(&entry, bake_directory, configuration, glyphs.clone())?;
         }
         else if entry.is_dir() {
             bake_font_directory(
                 &entry, &bake_directory.join(entry.file_name().unwrap()),
-                configuration, glyphs
+                configuration, glyphs.clone()
             )?;
         }
     }
@@ -77,15 +76,15 @@ pub fn bake_file(
     glyphs: impl Iterator<Item=char> + Clone,
 ) -> Result<()>
 {
-//    let font_file = File::open(ttf_file)?;
-//    let mut bytes = Vec::new();
-//    font_file.read_all(&mut bytes)?;
-    let bytes: Vec<u8> = File::open(ttf_file)?.bytes().collect();
+    let mut font_file = File::open(ttf_file)?;
+    let mut bytes = Vec::new();
+    font_file.read_to_end(&mut bytes)?;
 
     let font = crate::generate_font(&bytes, configuration, glyphs).unwrap();
 
     let mut baked_file = File::create(bake_file).unwrap();
-    Font::deserialized(font).write(&mut baked_file).unwrap();
+    font.write(&mut baked_file).unwrap();
+    Ok(())
 }
 
 

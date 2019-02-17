@@ -2,13 +2,13 @@ use oriole_text::atlas::{ SerializedAtlas };
 use oriole_text::rectangle::Rectangle;
 
 pub struct Segment {
-    size: (usize, usize),
-    distance_field: Vec<u8>,
+    pub size: (usize, usize),
+    pub distance_field: Vec<u8>,
 }
 
 
 
-pub fn generate_atlas(mut glyphs: impl Iterator<Item=(char, Segment)>) -> SerializedAtlas {
+pub fn generate_atlas(glyphs: impl Iterator<Item=(char, Segment)>) -> SerializedAtlas {
     let mut packed_size = (128, 128);
 
     struct PackedSegment {
@@ -64,10 +64,10 @@ pub fn generate_atlas(mut glyphs: impl Iterator<Item=(char, Segment)>) -> Serial
         // fill atlas with 255 per default, which is the largest distance possible
         let mut atlas = vec![::std::u8::MAX; atlas_w * atlas_h];
 
-        for packed in packed {
+        for packed in &packed {
             let (atlas_x, atlas_y) = packed.packed_position;
             let (segment_w, segment_h) = packed.image_data.size;
-            let pixels = packed.image_data.distance_field;
+            let pixels = &packed.image_data.distance_field;
 
             // copy row by row
             for segment_y in 0..segment_h {
