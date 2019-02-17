@@ -14,9 +14,9 @@ use crate::atlas::Segment;
 
 #[derive(Clone, Copy)]
 pub struct BuildConfiguration {
-    char_resolution_y: usize,
-    sdf_multisampling: usize,
-    skip_unknown_chars: bool,
+    pub char_resolution_y: usize,
+    pub sdf_multisampling: usize,
+    pub skip_unknown_chars: bool,
 }
 
 #[derive(Debug)]
