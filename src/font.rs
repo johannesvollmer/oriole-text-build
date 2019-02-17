@@ -19,6 +19,7 @@ pub struct BuildConfiguration {
     skip_unknown_chars: bool,
 }
 
+#[derive(Debug)]
 pub enum Error {
     FontDecode(rusttype::Error),
     UnsupportedGlyph(char)

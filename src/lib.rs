@@ -18,6 +18,7 @@ pub mod bake {
     use std::path::{ Path };
     use std::fs::File;
 
+    #[derive(Debug)]
     pub enum Error {
         File(::std::io::Error),
         Bake((crate::font::Error)),
