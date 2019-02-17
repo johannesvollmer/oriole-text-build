@@ -115,14 +115,13 @@ pub fn generate_font(
                 Some((character, segment))
             }
 
-            // glyph did not contain any shape, e.g. ' ' or '\t'
             else {
-                None
+                panic!("glyph did contain any shape (distance field is infinite)");
             }
 
         }
-        else {
-            panic!("No bounding box???");
+        else { // glyph did not contain any shape, e.g. ' ' or '\t'
+            None
         }
     }));
 
