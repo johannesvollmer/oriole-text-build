@@ -1,4 +1,4 @@
-# oriole-text-dev
+# oriole-text-build
 
 This crate will compile font files into signed distance fields.
 The produced texture can be used to render text on the GPU.

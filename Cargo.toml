@@ -1,11 +1,11 @@
 [package]
-name = "oriole-text-dev"
+name = "oriole-text-build"
 version = "0.1.0"
 authors = ["johannesvollmer <johannes.boenki@t-online.de>"]
 edition = "2018"
 
 [dependencies]
-oriole-text = { version = "0.1.0", path = "../oriole-text", features = [ "glium-render" ] }
+oriole-text = { git = "https://github.com/johannesvollmer/oriole-text" }
 
 # when used, these are dev-dependencies
 rusttype = "0.7.5"
