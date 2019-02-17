@@ -8,7 +8,7 @@ pub mod prelude {
     pub use crate::bake::bake_file;
     pub use crate::bake::bake_font_directory;
     pub use crate::font::generate_font;
-    pub use crate::font::BuildCongifuration;
+    pub use crate::font::BuildConfiguration;
 }
 
 pub mod bake {
@@ -21,7 +21,7 @@ pub mod bake {
     pub fn bake_font_directory(
         ttf_directory: &Path,
         bake_directory: &Path,
-        configuration: BuildCongifuration,
+        configuration: BuildConfiguration,
         glyphs: impl Iterator<Item=char> + Clone,
     ) -> Result<()>
     {
@@ -60,7 +60,7 @@ pub mod bake {
     pub fn update_bake_file(
         font_file: &Path,
         output_directory: &Path,
-        configuration: BuildCongifuration,
+        configuration: BuildConfiguration,
         glyphs: impl Iterator<Item=char> + Clone,
     ) -> Result<()>
     {
@@ -81,7 +81,7 @@ pub mod bake {
     pub fn bake_file(
         ttf_file: &Path,
         bake_file: &Path,
-        configuration: BuildCongifuration,
+        configuration: BuildConfiguration,
         glyphs: impl Iterator<Item=char> + Clone,
     ) -> Result<()>
     {

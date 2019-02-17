@@ -13,7 +13,7 @@ use crate::atlas::Segment;
 }*/
 
 #[derive(Clone, Copy)]
-pub struct BuildCongifuration {
+pub struct BuildConfiguration {
     char_resolution_y: usize,
     sdf_multisampling: usize,
     skip_unknown_chars: bool,
@@ -21,7 +21,7 @@ pub struct BuildCongifuration {
 
 pub fn generate_font(
     ttf_bytes: &[u8],
-    configuration: BuildCongifuration,
+    configuration: BuildConfiguration,
     chars: impl Iterator<Item=char> + Clone,
 )
     -> Result<SerializedFont, ()>
