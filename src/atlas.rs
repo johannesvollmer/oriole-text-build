@@ -8,7 +8,9 @@ pub struct Segment {
 
 
 
-pub fn generate_atlas(glyphs: impl Iterator<Item=(char, Segment)>) -> SerializedAtlas {
+pub fn generate_atlas(glyphs: impl Iterator<Item=(char, Segment)>)
+    -> SerializedAtlas
+{
     let mut packed_size = (128, 128);
 
     struct PackedSegment {

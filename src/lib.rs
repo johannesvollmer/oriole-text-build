@@ -14,16 +14,22 @@ pub mod prelude {
 pub mod bake {
     use super::prelude::*;
     use std::{fs};
-    use std::io::{ Result, Read };
+    use std::io::{ Read };
     use std::path::{ Path };
     use std::fs::File;
+
+    pub enum Error {
+        File(::std::io::Error),
+        Bake((crate::font::Error)),
+        Serialize(oriole_text::font::Error),
+    }
 
     pub fn bake_font_directory(
         ttf_directory: &Path,
         bake_directory: &Path,
         configuration: BuildConfiguration,
         glyphs: impl Iterator<Item=char> + Clone,
-    ) -> Result<()>
+    ) -> Result<(), Error>
     {
         if !bake_directory.exists() {
             fs::create_dir(bake_directory)?;
@@ -62,7 +68,7 @@ pub mod bake {
         output_directory: &Path,
         configuration: BuildConfiguration,
         glyphs: impl Iterator<Item=char> + Clone,
-    ) -> Result<()>
+    ) -> Result<(), Error>
     {
         let baked_font_file = output_directory
             .join(font_file.file_name().unwrap()).join(".baked_font");
@@ -83,16 +89,34 @@ pub mod bake {
         bake_file: &Path,
         configuration: BuildConfiguration,
         glyphs: impl Iterator<Item=char> + Clone,
-    ) -> Result<()>
+    ) -> Result<(), Error>
     {
         let mut font_file = File::open(ttf_file)?;
         let mut bytes = Vec::new();
         font_file.read_to_end(&mut bytes)?;
 
-        let font = generate_font(&bytes, configuration, glyphs).unwrap();
+        let font = generate_font(&bytes, configuration, glyphs)?;
 
-        let mut baked_file = File::create(bake_file).unwrap();
-        font.write(&mut baked_file).unwrap();
+        let mut baked_file = File::create(bake_file)?;
+        font.write(&mut baked_file)?;
         Ok(())
+    }
+
+    impl From<::std::io::Error> for Error {
+        fn from(error: ::std::io::Error) -> Self {
+            Error::File(error)
+        }
+    }
+
+    impl From<crate::font::Error> for Error {
+        fn from(error: crate::font::Error) -> Self {
+            Error::Bake(error)
+        }
+    }
+
+    impl From<oriole_text::font::Error> for Error {
+        fn from(error: oriole_text::font::Error) -> Self {
+            Error::Serialize(error)
+        }
     }
 }

@@ -19,14 +19,19 @@ pub struct BuildConfiguration {
     skip_unknown_chars: bool,
 }
 
+pub enum Error {
+    FontDecode(rusttype::Error),
+    UnsupportedGlyph(char)
+}
+
 pub fn generate_font(
     ttf_bytes: &[u8],
     configuration: BuildConfiguration,
     chars: impl Iterator<Item=char> + Clone,
 )
-    -> Result<SerializedFont, ()>
+    -> Result<SerializedFont, Error>
 {
-    let rusttype_font = rusttype::Font::from_bytes(ttf_bytes).unwrap();
+    let rusttype_font = rusttype::Font::from_bytes(ttf_bytes)?;
 
     let mut contained_chars = Vec::new();
 
@@ -46,7 +51,8 @@ pub fn generate_font(
                 return None;
             }
             else {
-                panic!("Glyph not supported by font: {}", character);
+                // TODO return Err(Error::UnsupportedGlyph(character));
+                panic!("unknown glyph");
             }
         }
 
@@ -134,5 +140,11 @@ pub fn generate_font(
             ascent: metrics.ascent
         }
     })
+}
+
+impl From<rusttype::Error> for Error {
+    fn from(error: rusttype::Error) -> Self {
+        Error::FontDecode(error)
+    }
 }
 
