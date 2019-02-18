@@ -26,7 +26,7 @@ pub fn generate_atlas(glyphs: impl Iterator<Item=(char, Segment)>)
         })
         .collect();
 
-    // write into each packed segment the rectangle where it was placed.
+    // write into each packed segment: the rectangle where it was placed.
     'pack_larger: loop {
         let packer_config = rect_packer::Config {
             width: packed_size.0 as i32,
@@ -35,10 +35,18 @@ pub fn generate_atlas(glyphs: impl Iterator<Item=(char, Segment)>)
             rectangle_padding: 3
         };
 
+        println!("w: {}, h: {}", packer_config.width, packer_config.height);
+
         let mut packer = rect_packer::Packer::new(packer_config);
 
         for packed_segment in &mut packed {
             let (w, h) = packed_segment.image_data.size;
+
+            println!("glyph size: w {}, h {}", w, h);
+            if w == 0 || h == 0 {
+                panic!("dimension is 0 for `{}`", packed_segment.character);
+            }
+
             if let Some(packed) = packer.pack(w as i32, h as i32, false){
                 packed_segment.packed_position = (packed.x as usize, packed.y as usize)
             }
@@ -46,6 +54,7 @@ pub fn generate_atlas(glyphs: impl Iterator<Item=(char, Segment)>)
             // if it does not fit, try packing into a larger texture
             // TODO are there researched algorithms for this?
             else {
+                println!("cannot fit {} into atlas", packed_segment.character);
                 packed_size.0 += 128;
                 packed_size.1 += 128;
                 continue 'pack_larger;

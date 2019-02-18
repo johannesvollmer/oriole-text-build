@@ -121,3 +121,81 @@ pub mod bake {
         }
     }
 }
+
+
+#[cfg(test)]
+pub mod test {
+
+    #[test]
+    fn main2(){
+        println!("testing!!!!!!");
+    }
+
+    #[test]
+    fn main(){
+        println!("testing!!!!!!");
+
+        use crate::prelude::*;
+        use std::fs::File;
+        use std::io::Read;
+
+        let mut file = File::open("fonts/Roboto-Regular.ttf").unwrap();
+        println!("opened file");
+
+        let mut bytes = Vec::new();
+        file.read_to_end(&mut bytes).unwrap();
+
+        println!("finished reading file bytes");
+
+        let configuration = BuildConfiguration {
+            char_resolution_y: 64, // 128
+            sdf_multisampling: 4,
+            skip_unknown_chars: true,
+            sdf_max_distance: 20
+        };
+
+        let font = generate_font(
+            &bytes, configuration, (0..=191_u8).map(|u| u as char)
+        ).unwrap();
+
+
+        use std::path::Path;
+        use std::io::BufWriter;
+        use png::HasParameters;
+
+        let path = Path::new("generated_images/sdf.png");
+        let file = File::create(path).unwrap();
+        let ref mut w = BufWriter::new(file);
+        let mut encoder = png::Encoder::new(
+            w, font.atlas.resolution.0 as u32, font.atlas.resolution.1 as u32
+        );
+        encoder.set(png::ColorType::Grayscale).set(png::BitDepth::Eight);
+        let mut writer = encoder.write_header().unwrap();
+        writer.write_image_data(&font.atlas.distance_field).unwrap();
+
+
+
+        let path = Path::new("generated_images/reconstructed.png");
+        let file = File::create(path).unwrap();
+        let ref mut w = BufWriter::new(file);
+        let mut encoder = png::Encoder::new(
+            w, font.atlas.resolution.0 as u32, font.atlas.resolution.1 as u32
+        );
+        encoder.set(png::ColorType::Grayscale).set(png::BitDepth::Eight);
+        let mut writer = encoder.write_header().unwrap();
+        let reconstructed: Vec<u8> = font.atlas.distance_field.iter()
+            .map(|u| if *u < 128 { 255 } else { 0 }).collect();
+        writer.write_image_data(&reconstructed).unwrap();
+
+        let path = Path::new("generated_images/font_uncompressed.baked");
+        let file = File::create(path).unwrap();
+        let ref mut w = BufWriter::new(file);
+        font.write_uncompressed(w).unwrap();
+
+        let path = Path::new("generated_images/font.baked");
+        let file = File::create(path).unwrap();
+        let ref mut w = BufWriter::new(file);
+        font.write(w).unwrap();
+
+    }
+}

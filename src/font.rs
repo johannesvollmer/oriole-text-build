@@ -17,6 +17,7 @@ pub struct BuildConfiguration {
     pub char_resolution_y: usize,
     pub sdf_multisampling: usize,
     pub skip_unknown_chars: bool,
+    pub sdf_max_distance: usize,
 }
 
 #[derive(Debug)]
@@ -44,10 +45,14 @@ pub fn generate_font(
     let proxy_position = rusttype::point(0.0, 0.0);
 
     let atlas = crate::atlas::generate_atlas(chars.clone().flat_map(|character|{
+
+        println!("starting character '{}'", character);
         let glyph = rusttype_font.glyph(character);
 
         // skip unknown glyphs, except for the zero-glyph itself
         if glyph.id().0 == 0 && character as usize != 0 {
+            println!("char not in font!");
+
             if configuration.skip_unknown_chars {
                 return None;
             }
@@ -62,15 +67,24 @@ pub fn generate_font(
             .positioned(proxy_position);
 
         if let Some(bounds) = glyph.pixel_bounding_box() {
-            let width = bounds.width() as usize;
-            let height = bounds.height() as usize;
+            println!("bounding box: {:?}, dimensions: {:?}", bounds, (bounds.width(), bounds.height()));
+            if bounds.width() == 0 || bounds.height() == 0 {
+                panic!("dimension is 0 for `{}`", character);
+            }
+
             contained_chars.push(character);
+
+            let padding = configuration.sdf_max_distance;
+            let width = bounds.width() as usize + padding * 2;
+            let height = bounds.height() as usize + padding * 2;
+            let x = bounds.min.x + padding as i32;
+            let y = bounds.min.y + padding as i32;
 
             // collect glyph layout
             glyphs.push((character, GlyphLayout {
                 advance_x: glyph.unpositioned().h_metrics().advance_width,
                 bounds: Rectangle {
-                    position: (bounds.min.x as f32 / proxy_scale_factor, bounds.min.y as f32 / proxy_scale_factor),
+                    position: (x as f32 / proxy_scale_factor, y as f32 / proxy_scale_factor),
                     dimensions: (width as f32 / proxy_scale_factor, height as f32 / proxy_scale_factor),
                 },
             }));
@@ -79,24 +93,28 @@ pub fn generate_font(
             for follower in chars.clone() {
                 let pair_kerning = rusttype_font.pair_kerning(proxy_scale, character, follower);
                 if pair_kerning.abs() > 0.00001 {
-                    kerning.push(((character, follower), pair_kerning));
+                    kerning.push(((character, follower), pair_kerning/*TODO / proxy_scale_factor*/));
                 }
             }
 
             let mut binary_image = vec![0_u8; width * height];
             glyph.draw(|x, y, value|{
-                binary_image[y as usize * width + x as usize] = if value > 0.5 { 255 } else { 0 };
+                binary_image[(y as usize + padding) * width + (x as usize + padding)] = {
+                    if value > 0.5 { 255 } else { 0 }
+                };
             });
 
             let distance_image = signed_distance_field::compute_f32_distance_field(
                 &signed_distance_field::binary_image::of_byte_slice(&binary_image, width as u16, height as u16)
             );
 
-            if let Some(distance_image) = distance_image.normalize_clamped_distances(-30.0, 30.0) {
+            if let Some(distance_image) = distance_image
+                .normalize_clamped_distances(-(configuration.sdf_max_distance as f32), configuration.sdf_max_distance as f32)
+            {
                 let distance_image = distance_image.to_u8();
 
-                let char_width = width / configuration.sdf_multisampling;
-                let char_height = height / configuration.sdf_multisampling;
+                let char_width = (width as f32 / configuration.sdf_multisampling as f32).ceil() as usize;
+                let char_height = (height as f32 / configuration.sdf_multisampling as f32).ceil() as usize;
 
                 let mut resizer = resize::new(
                     width, height, char_width, char_height,
@@ -116,7 +134,8 @@ pub fn generate_font(
             }
 
             else {
-                panic!("glyph did contain any shape (distance field is infinite)");
+                println!("glyph did contain any shape (distance field is infinite) for `{}`", character);
+                None
             }
 
         }
